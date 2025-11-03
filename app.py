@@ -4,7 +4,7 @@ import pandas as pd
 from datetime import date, datetime
 import uuid
 import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+from google.oauth2.service_account import Credentials
 
 # --- CONFIGURATION ---
 SHEET_ID = "107185697411127795995"  # from your Google Sheet URL
@@ -24,10 +24,10 @@ PAYMENT_METHODS = ["Cash on delivery", "Mobile money (M-Pesa)", "Bank Transfer",
 st.set_page_config(page_title="Fertilizer Order Portal", layout="centered")
 
 # --- Connect to Google Sheet ---
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_name(SERVICE_ACCOUNT_FILE, scope)
+creds_info = st.secrets["gcp_service_account"]
+creds = Credentials.from_service_account_info(creds_info)
 client = gspread.authorize(creds)
-sheet = client.open_by_key(SHEET_ID).sheet1
+sheet = client.open("FertilizerOrders").sheet1
 
 # --- Helper to add order to sheet ---
 def append_order_to_sheet(order_dict):
