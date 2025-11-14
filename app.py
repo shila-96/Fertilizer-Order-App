@@ -1,4 +1,3 @@
-app_code = '''
 import streamlit as st
 import pandas as pd
 from datetime import date, datetime
@@ -7,8 +6,6 @@ import gspread
 from google.oauth2.service_account import Credentials
 
 # --- CONFIGURATION ---
-SHEET_ID = "107185697411127795995"  # from your Google Sheet URL
-SERVICE_ACCOUNT_FILE = "fertilizerordersapp-9b3706737334.json"  # e.g. fertilizerapp-123456.json
 COMPANY_CODE = "GREENFLO"
 ADMIN_CODE = "GF_ADMIN_2025"
 
@@ -23,13 +20,17 @@ PAYMENT_METHODS = ["Cash on delivery", "Mobile money (M-Pesa)", "Bank Transfer",
 
 st.set_page_config(page_title="Fertilizer Order Portal", layout="centered")
 
-# --- Connect to Google Sheet ---
-creds_info = st.secrets["gcp_service_account"]
-creds = Credentials.from_service_account_info(creds_info)
-client = gspread.authorize(creds)
-sheet = client.open("FertilizerOrders").sheet1
+# --- Connect to Google Sheet via Streamlit secrets ---
+try:
+    creds_info = st.secrets["gcp_service_account"]
+    creds = Credentials.from_service_account_info(creds_info)
+    client = gspread.authorize(creds)
+    sheet = client.open_by_key("1oFYEpfwcAmd4mA6M3D4xmqNlDMvRSCJXI8Y66amjJmU").sheet1
+except Exception as e:
+    st.error("❌ Cannot connect to Google Sheet. Check your secrets.toml and internet connection.")
+    st.stop()
 
-# --- Helper to add order to sheet ---
+# --- Helper functions ---
 def append_order_to_sheet(order_dict):
     headers = list(order_dict.keys())
     existing_headers = sheet.row_values(1)
@@ -39,7 +40,7 @@ def append_order_to_sheet(order_dict):
 
 def fertilizer_lookup(fid):
     for f in FERTILIZER_TYPES:
-        if f["id"]==fid:
+        if f["id"] == fid:
             return f
     return None
 
@@ -49,6 +50,7 @@ st.caption("Place fertilizer orders for your farming cooperative or company.")
 
 menu = st.sidebar.selectbox("Menu", ["Place Order", "My Orders", "Admin"])
 
+# --- PLACE ORDER ---
 if menu == "Place Order":
     st.header("Place an Order")
     with st.form("access_form"):
@@ -99,10 +101,12 @@ if menu == "Place Order":
                     st.write("Order Summary:")
                     st.dataframe(pd.DataFrame([order]).T.rename(columns={0:"value"}))
 
+# --- MY ORDERS ---
 elif menu == "My Orders":
     st.header("Your Orders")
     st.info("To see your order history, open the shared Google Sheet (company staff view only).")
 
+# --- ADMIN ---
 elif menu == "Admin":
     st.header("Admin View")
     code = st.text_input("Enter admin code", type="password")
@@ -116,7 +120,3 @@ elif menu == "Admin":
             st.info("No orders yet.")
     else:
         st.warning("Enter admin code to continue.")
-'''
-with open("app.py", "w") as f:
-    f.write(app_code)
-print("✅ app.py created!")
