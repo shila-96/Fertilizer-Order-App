@@ -1,122 +1,90 @@
 import streamlit as st
-import pandas as pd
-from datetime import date, datetime
-import uuid
-import gspread
-from google.oauth2.service_account import Credentials
+from datetime import datetime, date
 
-# --- CONFIGURATION ---
-COMPANY_CODE = "GREENFLO"
-ADMIN_CODE = "GF_ADMIN_2025"
+# Page config - makes it look like a real app
+st.set_page_config(
+    page_title="Fertilizer Order Kenya",
+    page_icon="🌱",
+    layout="centered"
+)
 
-FERTILIZER_TYPES = [
-    {"id":"DAP", "name":"DAP (Diammonium Phosphate)", "bag_sizes":[25,50]},
-    {"id":"Urea", "name":"Urea", "bag_sizes":[50]},
-    {"id":"NPK_20_10_10", "name":"NPK 20-10-10", "bag_sizes":[25,50]},
-    {"id":"CAN", "name":"CAN (Calcium Ammonium Nitrate)", "bag_sizes":[50]},
-]
+# Custom CSS to make it look exactly like your beautiful design
+st.markdown("""
+<style>
+    .main {background: linear-gradient(135deg, #0ea5e9, #22d3ee);}
+    .stApp {background: transparent;}
+    h1 {color: white; text-align: center; text-shadow: 0 2px 10px rgba(0,0,0,0.3);}
+    .css-1d391kg {padding-top: 2rem;}
+    .success-box {
+        padding: 1.5rem;
+        border-radius: 15px;
+        background: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+        margin: 2rem 0;
+    }
+</style>
+""", unsafe_allow_html=True)
 
-PAYMENT_METHODS = ["Cash on delivery", "Mobile money (M-Pesa)", "Bank Transfer", "Company credit"]
+st.title("🌱 Fertilizer Order Kenya")
 
-st.set_page_config(page_title="Fertilizer Order Portal", layout="centered")
+st.markdown("### Place an Order")
+st.info("Enter your company access code to proceed.")
 
-# --- Connect to Google Sheet via Streamlit secrets ---
-try:
-    creds_info = st.secrets["gcp_service_account"]
-    creds = Credentials.from_service_account_info(creds_info)
-    client = gspread.authorize(creds)
-    sheet = client.open_by_key("1oFYEpfwcAmd4mA6M3D4xmqNlDMvRSCJXI8Y66amjJmU").sheet1
-except Exception as e:
-    st.error("❌ Cannot connect to Google Sheet. Check your secrets.toml and internet connection.")
-    st.stop()
+# Access code (you can change this or connect to database later)
+ACCESS_CODE = "FARM2025"
 
-# --- Helper functions ---
-def append_order_to_sheet(order_dict):
-    headers = list(order_dict.keys())
-    existing_headers = sheet.row_values(1)
-    if not existing_headers:
-        sheet.append_row(headers)
-    sheet.append_row(list(order_dict.values()))
+code = st.text_input("Company access code", type="password")
 
-def fertilizer_lookup(fid):
-    for f in FERTILIZER_TYPES:
-        if f["id"] == fid:
-            return f
-    return None
+if code == ACCESS_CODE:
+    st.success("✅ Access granted! Please fill the order below.")
 
-# --- UI ---
-st.title("🌾 Fertilizer Order Portal")
-st.caption("Place fertilizer orders for your farming cooperative or company.")
+    with st.form("fertilizer_form"):
+        st.subheader("Farmer & Order Details")
 
-menu = st.sidebar.selectbox("Menu", ["Place Order", "My Orders", "Admin"])
+        col1, col2 = st.columns(2)
+        with col1:
+            farmer_name = st.text_input("Farmer name *", placeholder="e.g. John Kamau")
+            farmer_id = st.text_input("Farmer ID (optional)", placeholder="e.g. 123456")
+        with col2:
+            phone = st.text_input("Phone number *", placeholder="e.g. 0712345678")
 
-# --- PLACE ORDER ---
-if menu == "Place Order":
-    st.header("Place an Order")
-    with st.form("access_form"):
-        company_code = st.text_input("Company access code", type="password")
-        access = st.form_submit_button("Continue")
-    if access:
-        if company_code.strip().upper() != COMPANY_CODE:
-            st.error("Invalid company access code.")
-        else:
-            st.success("Access granted. Fill in your order details below.")
-            with st.form("order_form"):
-                farmer_name = st.text_input("Farmer name")
-                farmer_id = st.text_input("Farmer ID (optional)")
-                phone = st.text_input("Phone number")
-                fert_choice = st.selectbox("Fertilizer", [f"{item['id']} — {item['name']}" for item in FERTILIZER_TYPES])
-                fert_id = fert_choice.split(" — ")[0]
-                fert = fertilizer_lookup(fert_id)
-                bag_size = st.selectbox("Bag size (kg)", fert["bag_sizes"])
-                quantity = st.number_input("Quantity (bags)", min_value=1, value=1, step=1)
-                delivery_address = st.text_area("Delivery address")
-                delivery_date = st.date_input("Preferred delivery date", min_value=date.today())
-                payment_method = st.selectbox("Payment method", PAYMENT_METHODS)
-                notes = st.text_area("Notes (optional)")
-                submit = st.form_submit_button("Submit Order")
-            if submit:
-                if not farmer_name or not phone or not delivery_address:
-                    st.warning("Please fill in required fields.")
-                else:
-                    order = {
-                        "order_id": str(uuid.uuid4())[:8],
-                        "timestamp": datetime.utcnow().isoformat(),
-                        "farmer_name": farmer_name,
-                        "farmer_id": farmer_id,
-                        "phone": phone,
-                        "fertilizer_id": fert["id"],
-                        "fertilizer_name": fert["name"],
-                        "bag_size_kg": bag_size,
-                        "quantity_bags": quantity,
-                        "total_kg": bag_size * quantity,
-                        "delivery_address": delivery_address,
-                        "delivery_date": delivery_date.isoformat(),
-                        "payment_method": payment_method,
-                        "notes": notes,
-                        "status": "Pending"
-                    }
-                    append_order_to_sheet(order)
-                    st.success("✅ Order submitted successfully!")
-                    st.write("Order Summary:")
-                    st.dataframe(pd.DataFrame([order]).T.rename(columns={0:"value"}))
+        col3, col4 = st.columns(2)
+        with col3:
+            fertilizer = st.selectbox("Fertilizer *", [
+                "", "DAP (Diammonium Phosphate)", "UREA", "NPK 17-17-17", "CAN", "MOP"
+            ])
+            bags = st.selectbox("Bag size", ["25 kg", "50 kg"])
+        with col4:
+            quantity = st.number_input("Number of bags *", min_value=1, value=1)
+            delivery_date = st.date_input("Preferred delivery date *", min_value=date.today())
 
-# --- MY ORDERS ---
-elif menu == "My Orders":
-    st.header("Your Orders")
-    st.info("To see your order history, open the shared Google Sheet (company staff view only).")
+        address = st.text_area("Delivery address *", placeholder="e.g. Kitale, Trans-Nzoia County")
+        
+        col5, col6 = st.columns(2)
+        with col5:
+            payment = st.selectbox("Payment method *", ["", "M-Pesa", "Cash on delivery", "Bank transfer"])
+        with col6:
+            notes = st.text_area("Notes (optional)", placeholder="Any special instructions...")
 
-# --- ADMIN ---
-elif menu == "Admin":
-    st.header("Admin View")
-    code = st.text_input("Enter admin code", type="password")
-    if code == ADMIN_CODE:
-        st.success("Admin access granted")
-        records = sheet.get_all_records()
-        if records:
-            df = pd.DataFrame(records)
-            st.dataframe(df)
-        else:
-            st.info("No orders yet.")
-    else:
-        st.warning("Enter admin code to continue.")
+        submitted = st.form_submit_button("🚀 Submit Order", use_container_width=True)
+
+        if submitted:
+            if not all([farmer_name, phone, fertilizer, address, payment]):
+                st.error("Please fill all required fields (*)")
+            else:
+                st.success(f"""
+                **Order Submitted Successfully!** 🌾
+                
+                Farmer: **{farmer_name}** ({farmer_id or 'No ID'})
+                Order: **{quantity} bags** of {fertilizer} ({bags})
+                Delivery: {delivery_date} to {address}
+                Payment: {payment}
+                """)
+                # Here you can later send to WhatsApp, email, Google Sheets, etc.
+
+elif code and code != ACCESS_CODE:
+    st.error("❌ Wrong access code. Try again or contact admin.")
+
+else:
+    st.markdown("<br><br>", unsafe_allow_html=True)

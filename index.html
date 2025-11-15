@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fertilizer Order</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+  <div class="container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="logo">Fertilizer Order</div>
+      <ul class="nav-menu">
+        <li><a href="#" class="nav-link active"><i class="fas fa-plus-circle"></i> Place Order</a></li>
+        <li><a href="#" class="nav-link"><i class="fas fa-list-ul"></i> My Orders</a></li>
+        <li><a href="#" class="nav-link"><i class="fas fa-user-shield"></i> Admin</a></li>
+      </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <h1 class="header">Fertilizer Order</h1>
+
+      <div class="form-card">
+        <h2 class="form-title">Place an Order</h2>
+        <p class="form-subtitle">Enter your company access code to proceed.</p>
+
+        <!-- Access Code -->
+        <div class="access-row">
+          <input type="text" class="form-control" placeholder="Company access code" />
+          <button class="btn btn-primary btn-continue">Continue</button>
+        </div>
+
+        <!-- Order Form (appears after access code) -->
+        <form id="orderForm">
+          <div class="form-group">
+            <label>Farmer name</label>
+            <input type="text" class="form-control" placeholder="Enter farmer name" required />
+          </div>
+
+          <div class="form-group">
+            <label>Farmer ID (optional)</label>
+            <input type="text" class="form-control" placeholder="Enter farmer ID" />
+          </div>
+
+          <div class="input-group">
+            <div class="form-group">
+              <label>Fertilizer</label>
+              <select class="form-control" required>
+                <option value="">Select fertilizer</option>
+                <option value="DAP">DAP (Diammonium Phosphate)</option>
+                <option value="UREA">UREA</option>
+                <option value="NPK">NPK 17-17-17</option>
+                <option value="CAN">CAN</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Bag size (kg)</label>
+              <select class="form-control" required>
+                <option value="25">25 kg</option>
+                <option value="50" selected>50 kg</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <div class="form-group">
+              <label>Delivery address</label>
+              <input type="text" class="form-control" placeholder="Enter delivery address" required />
+            </div>
+            <div class="form-group">
+              <label>Preferred delivery date</label>
+              <input type="date" class="form-control" required />
+            </div>
+          </div>
+
+          <div class="input-group">
+            <div class="form-group">
+              <label>Payment method</label>
+              <select class="form-control" required>
+                <option value="">Select payment method</option>
+                <option value="mpesa">M-Pesa</option>
+                <option value="cash">Cash on delivery</option>
+                <option value="bank">Bank transfer</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Notes (optional)</label>
+              <textarea class="form-control" rows="3" placeholder="Any additional notes..."></textarea>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-submit">
+            Submit Order
+          </button>
+        </form>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
